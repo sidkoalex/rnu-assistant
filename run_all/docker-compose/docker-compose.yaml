@@ -1,0 +1,93 @@
+version: '3.6'
+
+services:
+
+  ###########################################
+  ## TOOLS
+  ###########################################
+
+  # Main Database service ##########
+
+  mongo:
+    image: mongo:4.2.6-bionic
+    environment:
+      MONGO_INITDB_DATABASE: assistant
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - 27017:27017
+    volumes:
+      - ./../../apps_data/mongo/init_database.js:/docker-entrypoint-initdb.d/init_database.js:ro
+  # Instead of volume, let's use /apps_data/init_database.js file for development now
+  #      - mongo_data:/apps_data/db
+
+  # Main Databus service ##########
+
+  # Zookeeper for Kafka
+  zookeeper:
+    image: bitnami/zookeeper:3.6.1
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    ports:
+      - 2181:2181
+  # Kafka
+  kafka:
+    image: bitnami/kafka:2.5.0
+    ports:
+      - 9092:9092
+      - 29092:29092
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,PLAINTEXT_HOST://:29092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+
+  # Speech synthesis service ##########
+  voice-synthesis-server_rhvoice:
+    build: ./../../server_apps/voice-synthesis-server_rhvoice
+    ports:
+      - 5050:8080
+
+  ###########################################
+  ## Other server apps
+  ###########################################
+
+  ######## Step 1. Get command from User ########
+
+  # Get user text from HTTP GET requests
+  user-request-listener_http-request:
+    image: python:3.8.3-alpine
+    working_dir: /usr/src/app
+    command: "sh -c 'pip install -r requirements.txt && python main.py'"
+    environment:
+      MESSAGING_HOST: kafka
+    ports:
+      - 8080:8080
+    volumes:
+      - ./../../server_apps/user-request-listener_http-request:/usr/src/app
+
+  ######## Step 2. Generate different variations for user command ########
+
+  # Get user command text and send forward as is, without any changing
+  text-option-provider_plain:
+    image: bitnami/python:3.7.7
+    command: "sh -c 'pip install -r requirements.txt && python -u main.py'"
+    environment:
+      MESSAGING_HOST: kafka
+    volumes:
+      - ./../../server_apps/text-option-provider_plain:/app
+
+  ######## Step 3. Search the job by command ########
+
+  # Get user command text and send forward as is, without any changing
+  job-searcher_exact-match:
+    image: bitnami/python:3.7.7
+    command: "sh -c 'pip install -r requirements.txt && python -u main.py'"
+    environment:
+      MESSAGING_HOST: kafka
+    volumes:
+      - ./../../server_apps/job-searcher_exact-match:/app
+
+#volumes:
+#  mongo_data:
