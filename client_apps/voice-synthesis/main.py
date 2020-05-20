@@ -22,25 +22,23 @@ while producer is None and consumer is None:
 
 print("Start listening messages from 'say' topic")
 
+os.makedirs('tmp', exist_ok=True)
 
-print("Start reading messages from say topic")
 for message in consumer:
     payload = message.value
     print("Got message: {}".format(payload))
 
     response = requests.get('http://localhost:5050', {
         'voice': 'Aleksandr',  # russian man voice name
+        # 'voice': 'Anna',  # russian female voice name
+        # 'voice': 'Elena',  # russian female voice name
         'text': payload
     })
 
-    with open('voice.mp3', 'wb') as f:
+    fileName = join(dirname(__file__), f'tmp/voice_{time.time()}.mp3')
+
+    with open(fileName, 'wb') as f:
         f.write(response.content)
 
-    song = pyglet.media.load('voice.mp3')
-    song.play()
-    pyglet.app.run()
-
-
-
-
-
+    audio = AudioSegment.from_mp3(fileName)
+    play(audio)
