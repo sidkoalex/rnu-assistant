@@ -64,6 +64,7 @@ services:
       MESSAGING_HOST: kafka
     ports:
       - 8080:8080
+    restart: always
     volumes:
       - ./../../server_apps/user-request-listener_http-request:/usr/src/app
 
@@ -75,6 +76,7 @@ services:
     command: "sh -c 'pip install -r requirements.txt && python -u main.py'"
     environment:
       MESSAGING_HOST: kafka
+    restart: always
     volumes:
       - ./../../server_apps/text-option-provider_plain:/app
 
@@ -86,6 +88,7 @@ services:
     command: "sh -c 'pip install -r requirements.txt && python -u main.py'"
     environment:
       MESSAGING_HOST: kafka
+    restart: always
     volumes:
       - ./../../server_apps/job-searcher_exact-match:/app
 
