@@ -49,6 +49,12 @@ services:
     ports:
       - 5050:8080
 
+  # Speech listener service #########
+  voice-listener-server_vosk:
+    image: alphacep/kaldi-ru
+    ports:
+      - 2700:2700
+
   ###########################################
   ## Other server apps
   ###########################################
