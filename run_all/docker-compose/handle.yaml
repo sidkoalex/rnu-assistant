@@ -5,37 +5,27 @@ services:
 
   # Get user text from HTTP GET requests
   user-request-listener_http-request:
-    image: python:3.8.3-alpine
-    working_dir: /usr/src/app
-    command: "sh -c 'pip install -r requirements.txt && python main.py'"
+    build: ./../../server_apps/user_request_handle/user-request-listener_http-request
     environment:
       MESSAGING_HOST: kafka
     ports:
       - 8080:8080
     restart: always
-    volumes:
-      - ./../../server_apps/user-request-listener_http-request:/usr/src/app
 
   ######## Step 2. Generate different variations for user command ########
 
   # Get user command text and send forward as is, without any changing
   text-option-provider_plain:
-    image: bitnami/python:3.7.7
-    command: "sh -c 'pip install -r requirements.txt && python -u main.py'"
+    build: ./../../server_apps/user_request_handle/text-option-provider_plain
     environment:
       MESSAGING_HOST: kafka
     restart: always
-    volumes:
-      - ./../../server_apps/text-option-provider_plain:/app
 
   ######## Step 3. Search the job by command ########
 
   # Get user command text and send forward as is, without any changing
   job-searcher_exact-match:
-    image: bitnami/python:3.7.7
-    command: "sh -c 'pip install -r requirements.txt && python -u main.py'"
+    build: ./../../server_apps/user_request_handle/job-searcher_exact-match
     environment:
       MESSAGING_HOST: kafka
     restart: always
-    volumes:
-      - ./../../server_apps/job-searcher_exact-match:/app
