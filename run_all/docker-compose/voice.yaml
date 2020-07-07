@@ -1,0 +1,13 @@
+version: '3.6'
+services:
+  # Speech synthesis service ##########
+  voice-synthesis-server_rhvoice:
+    build: ./../../server_apps/voice-synthesis-server_rhvoice
+    ports:
+      - 5050:8080
+
+  # Speech listener service #########
+  voice-listener-server_vosk:
+    image: alphacep/kaldi-ru
+    ports:
+      - 2700:2700

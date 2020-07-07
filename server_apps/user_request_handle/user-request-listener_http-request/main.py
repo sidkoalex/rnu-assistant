@@ -6,30 +6,29 @@ from bottle import route, run
 from kafka import KafkaProducer
 import logging
 
+
 ####################
-# Initializing
+# Configurations
 ####################
 
+# App config
 APP_NAME = getenv("APP_NAME", "user-request-listener_http-request")
 APP_PORT = getenv("APP_PORT", 8080)
 GROUP_NAME = getenv("GROUP_NAME", "user-request-listener")
-LOG_LEVEL = getenv("LOG_LEVEL", "DEBUG")
 
+# Messaging config
 MESSAGING_SEND_TOPIC_NAME = getenv('MESSAGING_SEND_TOPIC_NAME', 'user-request-listener')
-MESSAGING_HOST = getenv('MESSAGING_HOST', 'kafka')
-MESSAGING_PORT = getenv('MESSAGING_PORT', '9092')
+MESSAGING_HOST = getenv('MESSAGING_HOST', 'localhost')
+MESSAGING_PORT = getenv('MESSAGING_PORT', '29092')
 
+# Logging config
+LOG_LEVEL = getenv("LOG_LEVEL", "DEBUG")
 log = logging.getLogger(APP_NAME)
 log.setLevel(logging.DEBUG)
 log_console_handler = logging.StreamHandler()
 log_console_handler.setLevel(LOG_LEVEL)
-log_formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(name)s :: %(message)s')
-log_console_handler.setFormatter(log_formatter)
+log_console_handler.setFormatter(logging.Formatter('%(asctime)s :: %(levelname)s :: %(name)s :: %(message)s'))
 log.addHandler(log_console_handler)
-
-log.info(f"Creating Kafka producer on {MESSAGING_HOST}:{MESSAGING_PORT}")
-producer = KafkaProducer(bootstrap_servers=[f'{MESSAGING_HOST}:{MESSAGING_PORT}'],
-                         value_serializer=lambda x: dumps(x).encode('utf-8'))
 
 
 #########################################
@@ -43,8 +42,21 @@ def uid():
 
 
 def send_answer_message(payload):
+    global producer
     log.debug("Sending answer message to topic %s. Message: %s", MESSAGING_SEND_TOPIC_NAME, payload)
     producer.send(MESSAGING_SEND_TOPIC_NAME, payload)
+    producer.flush()
+
+
+####################
+# Initialization
+####################
+
+# Kafka producer
+log.info(f"Creating Kafka producer on {MESSAGING_HOST}:{MESSAGING_PORT}")
+producer = KafkaProducer(
+    bootstrap_servers=[f'{MESSAGING_HOST}:{MESSAGING_PORT}'],
+    value_serializer=lambda x: dumps(x).encode('utf-8'))
 
 
 #########################################
@@ -72,6 +84,5 @@ def get_text(user_text):
 #########################################
 
 if __name__ == '__main__':
-    log.debug("Logging DEBUG level is on")
     log.info(f"Running Web Server on port {APP_PORT}")
     run(host="0.0.0.0", port=APP_PORT)

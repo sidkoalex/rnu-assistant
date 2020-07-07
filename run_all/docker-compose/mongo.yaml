@@ -1,0 +1,17 @@
+version: '3.6'
+services:
+  mongo:
+    image: mongo:4.2.6-bionic
+    environment:
+      MONGO_INITDB_DATABASE: assistant
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - 27017:27017
+    volumes:
+      - ./../../apps_data/mongo/init_database.js:/docker-entrypoint-initdb.d/init_database.js:ro
+  # Instead of volume, let's use /apps_data/init_database.js file for development now
+  #      - mongo_data:/apps_data/db
+
+#volumes:
+#  mongo_data:
